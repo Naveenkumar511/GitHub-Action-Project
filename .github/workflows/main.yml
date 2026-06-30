@@ -1,0 +1,19 @@
+name: Deployment
+
+on: 
+    push:
+
+jobs:
+    build-launch:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v5
+        - name: Installing docker
+          run: sudo apt install docker -y
+        - run: pip install -r requirements.txt
+        - run: pytest   
+        - name: Building image
+          run: sudo docker build -it app-img .
+        - name: Running container
+          run: sudo docker run -d --name app1 -p 80:5000 app-img

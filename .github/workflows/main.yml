@@ -1,19 +1,40 @@
 name: Deployment
 
-on: 
-    push:
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-    build-launch:
-      runs-on: self-hosted
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-        - name: Installing docker
-          run: sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
-        - run: pip install -r requirements.txt
-        - run: pytest   
-        - name: Building image
-          run: sudo docker build -it app-img .
-        - name: Running container
-          run: sudo docker run -d --name app1 -p 80:5000 app-img
+  build-launch:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Tests
+        run: pytest
+
+      - name: Build Docker Image
+        run: |
+          sudo docker build -t app-img .
+
+      - name: Stop Existing Container
+        run: |
+          sudo docker stop app1 || true
+          sudo docker rm app1 || true
+
+      - name: Run Docker Container
+        run: |
+          sudo docker run -d --name app1 -p 80:5000 app-img
